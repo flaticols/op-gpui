@@ -98,6 +98,9 @@ pub(crate) fn protocol_error(error: serde_json::Error) -> Error {
 mod base64_bytes {
     use super::*;
 
+    // Requests follow the Go SDK and encode bytes as base64. Desktop app
+    // versions in the wild have returned either that string form or a JSON
+    // byte array, so response decoding intentionally accepts both shapes.
     pub fn serialize<S>(bytes: &[u8], serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -109,7 +112,16 @@ mod base64_bytes {
     where
         D: Deserializer<'de>,
     {
-        let encoded = String::deserialize(deserializer)?;
-        STANDARD.decode(encoded).map_err(D::Error::custom)
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Payload {
+            Base64(String),
+            Bytes(Vec<u8>),
+        }
+
+        match Payload::deserialize(deserializer)? {
+            Payload::Base64(encoded) => STANDARD.decode(encoded).map_err(D::Error::custom),
+            Payload::Bytes(bytes) => Ok(bytes),
+        }
     }
 }

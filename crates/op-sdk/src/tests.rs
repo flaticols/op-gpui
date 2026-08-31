@@ -49,11 +49,29 @@ fn success(payload: Value) -> Result<Vec<u8>> {
     .unwrap())
 }
 
+fn success_bytes(payload: Value) -> Result<Vec<u8>> {
+    let payload = serde_json::to_vec(&payload).unwrap();
+    Ok(serde_json::to_vec(&json!({
+        "success": true,
+        "payload": payload,
+    }))
+    .unwrap())
+}
+
 fn remote_error(name: &str, message: &str) -> Result<Vec<u8>> {
     let payload = serde_json::to_vec(&json!({ "name": name, "message": message })).unwrap();
     Ok(serde_json::to_vec(&json!({
         "success": false,
         "payload": STANDARD.encode(payload),
+    }))
+    .unwrap())
+}
+
+fn remote_error_bytes(name: &str, message: &str) -> Result<Vec<u8>> {
+    let payload = serde_json::to_vec(&json!({ "name": name, "message": message })).unwrap();
+    Ok(serde_json::to_vec(&json!({
+        "success": false,
+        "payload": payload,
     }))
     .unwrap())
 }
@@ -81,6 +99,47 @@ fn request_payloads_match_go_base64_encoding() {
     assert_eq!(config["account_name"], "Example");
     assert_eq!(config["architecture"], wire_architecture());
     drop(client);
+}
+
+#[test]
+fn response_payloads_accept_base64_strings_and_byte_arrays() {
+    let expected = serde_json::to_vec(&json!({ "client_id": 42 })).unwrap();
+
+    assert_eq!(
+        decode_response(&success(json!({ "client_id": 42 })).unwrap()).unwrap(),
+        expected
+    );
+    assert_eq!(
+        decode_response(&success_bytes(json!({ "client_id": 42 })).unwrap()).unwrap(),
+        expected
+    );
+}
+
+#[test]
+fn byte_array_response_envelopes_work_through_the_client() {
+    let transport = FakeTransport::with_responses([
+        success_bytes(json!(7)),
+        success_bytes(json!([{
+            "id": "v1", "title": "Private", "description": "", "activeItemCount": 1
+        }])),
+    ]);
+
+    let client = client_with(transport).unwrap();
+    let vaults = client.vaults().unwrap();
+
+    assert_eq!(vaults.len(), 1);
+    assert_eq!(vaults[0].title(), "Private");
+}
+
+#[test]
+fn byte_array_remote_errors_remain_structured() {
+    let response = remote_error_bytes("DesktopError", "not available").unwrap();
+
+    assert!(matches!(
+        decode_response(&response),
+        Err(Error::Remote { name, message })
+            if name == "DesktopError" && message == "not available"
+    ));
 }
 
 #[test]
