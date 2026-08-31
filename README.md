@@ -62,6 +62,14 @@ tested at PMX's `7eec89207ccfbef7ba366da22fc885079a5c0296` revision. A workspace
 that forks GPUI itself must redirect that upstream source consistently (for
 example with a root `[patch]`) so only one GPUI source remains in its graph.
 
+Applications that bootstrap GPUI through `gpui_platform` on macOS must enable
+its `font-kit` feature. `gpui_platform` has no default features, and without
+this feature `gpui_macos` deliberately renders no text:
+
+```toml
+gpui_platform = { git = "https://github.com/zed-industries/zed", features = ["font-kit"] }
+```
+
 ## Run the demo
 
 The default demo uses built-in metadata and does not contact 1Password:

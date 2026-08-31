@@ -10,7 +10,7 @@ publish = false
 
 [dependencies]
 gpui.workspace = true
-gpui_platform.workspace = true
+gpui_platform = { workspace = true, features = ["font-kit"] }
 op-gpui.workspace = true
 op-sdk.workspace = true
 

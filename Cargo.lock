@@ -2135,6 +2135,7 @@ dependencies = [
  "smallvec",
  "strum",
  "uuid",
+ "zed-font-kit",
 ]
 
 [[package]]
