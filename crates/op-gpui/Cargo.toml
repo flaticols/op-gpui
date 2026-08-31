@@ -1,0 +1,19 @@
+[package]
+name = "op-gpui"
+description = "Pure GPUI secret-reference picker for the 1Password desktop SDK"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+gpui.workspace = true
+op-sdk.workspace = true
+
+[dev-dependencies]
+gpui = { workspace = true, features = ["test-support"] }
+
+[lints]
+workspace = true
