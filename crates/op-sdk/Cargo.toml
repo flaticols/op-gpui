@@ -1,0 +1,29 @@
+[package]
+name = "op-sdk"
+description = "Unofficial Rust client for 1Password desktop app integration"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+publish = false
+readme = "README.md"
+keywords = ["1password", "secrets", "macos"]
+categories = ["api-bindings", "os::macos-apis"]
+
+[features]
+default = []
+unstable-raw = []
+
+[dependencies]
+base64.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+zeroize.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+libloading.workspace = true
+
+[lints]
+workspace = true
