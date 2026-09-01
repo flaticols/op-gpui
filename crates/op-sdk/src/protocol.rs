@@ -24,7 +24,7 @@ pub(crate) struct Response {
 pub(crate) struct ClientConfig<'a> {
     pub service_account_token: &'a str,
     pub programming_language: &'static str,
-    pub sdk_version: &'static str,
+    pub sdk_version: &'a str,
     pub integration_name: &'a str,
     pub integration_version: &'a str,
     pub request_library_name: &'static str,

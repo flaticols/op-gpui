@@ -264,10 +264,11 @@ impl ClientBuilder {
 
 impl ClientInner {
     fn initialize(&self) -> Result<u64> {
+        let packed = packed_version();
         let config = ClientConfig {
             service_account_token: "",
             programming_language: "Rust",
-            sdk_version: env!("CARGO_PKG_VERSION"),
+            sdk_version: &packed,
             integration_name: &self.integration.name,
             integration_version: &self.integration.version,
             request_library_name: "libloading",
@@ -407,6 +408,29 @@ fn find_library_in(candidates: Vec<PathBuf>, exists: impl Fn(&Path) -> bool) -> 
         .ok_or(Error::ApplicationNotFound {
             searched_paths: candidates,
         })
+}
+
+/// This crate's own version in the packed form the desktop app requires.
+///
+/// **Not a semver, and that is the whole point.** The relay validates this
+/// field's *shape*: a `"0.1.0"` is refused, and the refusal arrives as
+/// `Failed to delegate a session ... HttpStatus(400)` from 1Password's server -
+/// naming neither this field nor a format, and looking for all the world like
+/// an unlock or entitlement problem. It is not; every account and every other
+/// field was eliminated before this one was found by diffing against the
+/// official Go SDK on the wire.
+///
+/// The encoding is `major(1) minor(2) patch(2) build(2)`, read off that SDK's
+/// own embedded `release/version-build`: `0.4.0` build 3 is `0040003`, `0.4.1`
+/// build 2 is `0040102`. There is no minimum - `0010000` and `9990000` are both
+/// accepted - so this reports the truth about itself rather than borrowing a
+/// version it does not have. Build is always 0: this crate has no fourth
+/// component to report.
+fn packed_version() -> String {
+    let major: u32 = env!("CARGO_PKG_VERSION_MAJOR").parse().unwrap_or(0);
+    let minor: u32 = env!("CARGO_PKG_VERSION_MINOR").parse().unwrap_or(0);
+    let patch: u32 = env!("CARGO_PKG_VERSION_PATCH").parse().unwrap_or(0);
+    format!("{:01}{:02}{:02}{:02}", major % 10, minor % 100, patch % 100, 0)
 }
 
 const fn wire_os() -> &'static str {

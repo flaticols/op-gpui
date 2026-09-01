@@ -315,3 +315,22 @@ fn public_handles_are_send_and_sync() {
     assert_send_sync::<Client>();
     assert_send_sync::<SecretValue>();
 }
+
+#[test]
+fn the_sdk_version_is_packed_rather_than_a_semver() {
+    /* The desktop relay validates this field's SHAPE. A `"0.1.0"` is refused
+    as `Failed to delegate a session ... HttpStatus(400)` from 1Password's
+    server, which names neither this field nor a format - so the encoding is
+    pinned here rather than left to be rediscovered by eliminating every
+    account, every other field and the unlock path first.
+
+    `major(1) minor(2) patch(2) build(2)`, read off the official Go SDK's own
+    embedded `release/version-build`: 0.4.0 build 3 is `0040003`, 0.4.1 build 2
+    is `0040102`. */
+    let packed = super::packed_version();
+
+    assert_eq!(packed.len(), 7, "{packed}");
+    assert!(packed.chars().all(|c| c.is_ascii_digit()), "{packed}");
+    assert!(!packed.contains('.'), "{packed}");
+}
+
