@@ -143,6 +143,37 @@ fn byte_array_remote_errors_remain_structured() {
 }
 
 #[test]
+fn an_empty_section_id_means_no_section_rather_than_an_empty_one() {
+    /* The desktop app sends `"sectionId": ""` for every custom field on an
+    item that has no sections - not null, not absent. Carried through as
+    `Some("")` it makes `for_field` build `op://v1/i1//custom`, which is
+    refused as an empty segment, so EVERY field of such an item fails to
+    resolve and a caller that skips what it cannot read sees an item with no
+    fields at all. That is exactly how it presented: an import that silently
+    found nothing. */
+    let transport = FakeTransport::with_responses([
+        success(json!(7)),
+        success(json!({
+            "fields": [
+                {"id": "custom", "title": "pmx_environment", "sectionId": "",
+                 "fieldType": "Concealed", "value": "x"}
+            ],
+            "sections": []
+        })),
+    ]);
+    let client = client_with(transport).unwrap();
+    let vault = VaultId::new("v1").unwrap();
+    let item = ItemId::new("i1").unwrap();
+
+    let fields = client.fields(&vault, &item).unwrap();
+
+    assert_eq!(fields[0].section_id(), None);
+    assert_eq!(fields[0].section_title(), None);
+    let reference = client.secret_reference(&vault, &item, &fields[0]).unwrap();
+    assert_eq!(reference.as_str(), "op://v1/i1/custom");
+}
+
+#[test]
 fn typed_browsing_and_secret_resolution() {
     let transport = FakeTransport::with_responses([
         success(json!(7)),

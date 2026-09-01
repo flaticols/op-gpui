@@ -101,15 +101,25 @@ impl Client {
         item.fields
             .into_iter()
             .map(|field| {
-                let section_title = field
+                /* An EMPTY `sectionId` means the field is in no section, and
+                the desktop app really does send one - every custom field on an
+                item with no sections comes back `"sectionId": ""` rather than
+                null or absent. Left as `Some("")` it reaches
+                `SecretReference::for_field`, which builds `op://vault/item//id`
+                and refuses it as an empty segment - so every field of every
+                such item fails to resolve, and a caller that skips a field it
+                cannot read sees an item with no fields at all. */
+                let section_id = field
                     .section_id
+                    .filter(|section_id| !section_id.as_str().is_empty());
+                let section_title = section_id
                     .as_ref()
                     .and_then(|section_id| sections.get(section_id))
                     .cloned();
                 Ok(FieldOverview::new(
                     field.id,
                     field.title,
-                    field.section_id,
+                    section_id,
                     section_title,
                     field.kind,
                 ))
