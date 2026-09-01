@@ -19,7 +19,7 @@ dependency. A PMX fork of `gpui-component` therefore does not affect its GPUI
 type identity. See [`crates/op-sdk`](crates/op-sdk) and
 [`crates/op-gpui`](crates/op-gpui) for their APIs and compatibility details.
 
-## Use from PMX
+## Use from GPUI
 
 Cargo can fetch this private repository directly when the build machine has
 read access through its SSH agent. Pin a commit in PMX's `Cargo.toml`:
